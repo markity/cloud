@@ -11,7 +11,7 @@ import (
 
 func uploadCmd(args []string) {
 	if len(args) != 2 {
-		fmt.Printf("upload:参数错误, 输入help获得帮助信息\n")
+		fmt.Printf("upload:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 	filePath := args[1]
@@ -45,7 +45,7 @@ func uploadCmd(args []string) {
 
 	fmt.Printf("当前操作:上传文件%v, 文件大小%v\n", fileName, fileSize)
 
-	err = bucket.UploadFile(fileName, filePath, 2*1024*1024, oss.Progress(newProgressBar(fileSize)), oss.Routines(3), oss.Checkpoint(true, fmt.Sprintf("%v.cp", fileName)))
+	err = bucket.UploadFile(fileName, filePath, partSize, oss.Progress(newProgressBar(fileSize)), oss.Routines(numThreads), oss.Checkpoint(true, fmt.Sprintf("%v.cp", fileName)))
 	if err != nil {
 		fmt.Printf("上传文件失败:%v\n", err)
 		return
@@ -56,7 +56,7 @@ func uploadCmd(args []string) {
 
 func downloadCmd(args []string) {
 	if len(args) != 2 {
-		fmt.Printf("download:参数错误, 输入help获得帮助信息\n")
+		fmt.Printf("download:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 	objectName := args[1]
@@ -95,7 +95,7 @@ func downloadCmd(args []string) {
 
 	fmt.Printf("当前操作:下载文件%v, 文件大小%v\n", objectName, fileSize)
 
-	err = bucket.DownloadFile(objectName, objectName, 2*1024*1024, oss.Progress(newProgressBar(fileSize)), oss.Routines(3), oss.Checkpoint(true, fmt.Sprintf("%v.cp", objectName)))
+	err = bucket.DownloadFile(objectName, objectName, partSize, oss.Progress(newProgressBar(fileSize)), oss.Routines(numThreads), oss.Checkpoint(true, fmt.Sprintf("%v.cp", objectName)))
 	if err != nil {
 		fmt.Printf("下载文件失败:%v\n", err)
 		return
@@ -104,9 +104,9 @@ func downloadCmd(args []string) {
 	fmt.Printf("下载成功\n")
 }
 
-func showCmd(args []string) {
+func listCmd(args []string) {
 	if len(args) != 1 {
-		fmt.Printf("help:参数错误, 输入help查看帮助信息\n")
+		fmt.Printf("list:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 
@@ -134,7 +134,7 @@ func showCmd(args []string) {
 
 func removeCmd(args []string) {
 	if len(args) != 2 {
-		fmt.Printf("remove:参数错误, 输入help获得帮助信息\n")
+		fmt.Printf("remove:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 	objectName := args[1]
@@ -160,7 +160,7 @@ func removeCmd(args []string) {
 
 func helpCmd(args []string) {
 	if len(args) != 1 {
-		fmt.Printf("help:参数错误, 输入help查看帮助信息\n")
+		fmt.Printf("help:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 
@@ -179,16 +179,16 @@ func handCommand(args []string) {
 		case "download":
 			downloadCmd(args)
 		case "list":
-			showCmd(args)
+			listCmd(args)
 		case "remove":
 			removeCmd(args)
 		case "help":
 			helpCmd(args)
 		default:
-			fmt.Printf("未知的命令, 请输入help查看帮助信息\n")
+			fmt.Printf("未知的命令, 输入help获取帮助信息\n")
 		}
 	} else {
-		fmt.Printf("命令参数有误, 请输入help查看帮助信息\n")
+		fmt.Printf("命令参数有误, 输入help获取帮助信息\n")
 	}
 }
 

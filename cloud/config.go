@@ -9,6 +9,9 @@ var accessKeyID = "LTAIsfVsnfB9GgSx"
 var accessKeySecret = "yqSlknBGyIpe3iUr8jdbm2TqJqA8ni"
 var bucketName = "cloud-netdisk"
 
+const partSize = 2 * 1024 * 1024
+const numThreads = 3
+
 // 获取数据桶, 通常只执行一次
 func getBucket() (*oss.Bucket, error) {
 	client, err := oss.New(endpoint, accessKeyID, accessKeySecret)
