@@ -14,7 +14,7 @@ import (
 
 func uploadCmd(args []string) {
 	if len(args) != 2 {
-		fmt.Printf("upload:参数错误,输入help获得帮助信息\n")
+		fmt.Printf("upload:参数错误, 输入help获得帮助信息\n")
 		return
 	}
 	filePath := args[1]
@@ -34,10 +34,10 @@ func uploadCmd(args []string) {
 		return
 	}
 
-	fmt.Printf("当前操作:上传文件%v,文件大小%v\n", fileInfo.Name(), fileInfo.Size())
+	fmt.Printf("当前操作:上传文件%v, 文件大小%v\n", fileInfo.Name(), fileInfo.Size())
 
 	progressBar := progress.NewUploadProgress(fileInfo.Size())
-	_, err = client.PutObject(bucketName, fileInfo.Name(), file, fileInfo.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream", Progress: progressBar})
+	_, err = client.PutObject(bucketName, fileInfo.Name(), file, fileInfo.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream", NumThreads: 10, Progress: progressBar})
 	if err != nil {
 		fmt.Printf("上传文件失败:%v\n", err)
 		return
@@ -47,7 +47,7 @@ func uploadCmd(args []string) {
 
 func downloadCmd(args []string) {
 	if len(args) != 2 {
-		fmt.Printf("download:参数错误,输入help获得帮助信息\n")
+		fmt.Printf("download:参数错误, 输入help获得帮助信息\n")
 		return
 	}
 	fileName := args[1]
@@ -65,11 +65,11 @@ func downloadCmd(args []string) {
 	}
 
 	if _, err := os.Stat(objInfo.Key); err != nil && !os.IsNotExist(err) {
-		fmt.Printf("该目录下存在同名文件,请删除或改名后重试\n")
+		fmt.Printf("该目录下存在同名文件, 请删除或改名后重试\n")
 		return
 	}
 
-	fmt.Printf("当前操作:下载文件%v,文件大小%v\n", objInfo.Key, objInfo.Size)
+	fmt.Printf("当前操作:下载文件%v, 文件大小%v\n", objInfo.Key, objInfo.Size)
 
 	file, err := os.OpenFile(objInfo.Key, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
@@ -87,7 +87,7 @@ func downloadCmd(args []string) {
 
 func showCmd(args []string) {
 	if len(args) != 1 {
-		fmt.Printf("help:参数错误,输入help查看帮助信息\n")
+		fmt.Printf("help:参数错误, 输入help查看帮助信息\n")
 		return
 	}
 
@@ -111,7 +111,7 @@ func removeCmd(args []string) {
 	var err error
 
 	if len(args) != 2 {
-		fmt.Printf("remove:参数错误,输入help获得帮助信息\n")
+		fmt.Printf("remove:参数错误, 输入help获得帮助信息\n")
 		return
 	}
 	fileName := args[1]
@@ -122,7 +122,7 @@ func removeCmd(args []string) {
 		return
 	}
 
-	fmt.Printf("当前操作:删除文件%v,文件大小%v\n", objInfo.Key, objInfo.Size)
+	fmt.Printf("当前操作:删除文件%v, 文件大小%v\n", objInfo.Key, objInfo.Size)
 
 	err = client.RemoveObject(bucketName, fileName)
 	if err != nil {
@@ -135,7 +135,7 @@ func removeCmd(args []string) {
 
 func helpCmd(args []string) {
 	if len(args) != 1 {
-		fmt.Printf("help:参数错误,输入help查看帮助信息\n")
+		fmt.Printf("help:参数错误, 输入help查看帮助信息\n")
 		return
 	}
 
@@ -160,10 +160,10 @@ func handCommand(args []string) {
 		case "help":
 			helpCmd(args)
 		default:
-			fmt.Printf("未知的命令,请输入help查看帮助信息\n")
+			fmt.Printf("未知的命令, 请输入help查看帮助信息\n")
 		}
 	} else {
-		fmt.Printf("命令参数有误,请输入help查看帮助信息\n")
+		fmt.Printf("命令参数有误, 请输入help查看帮助信息\n")
 	}
 }
 
