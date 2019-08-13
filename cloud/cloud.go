@@ -10,41 +10,57 @@ import (
 )
 
 func uploadCmd(args []string) {
+	var err error
+
 	if len(args) != 2 {
 		fmt.Printf("upload:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 	filePath := args[1]
 
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Printf("不存在的文件\n")
-			return
+	// Get file information
+	fileInfo, err := func() (os.FileInfo, error) {
+		var err error
+
+		fInfo, err := os.Stat(filePath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil, fmt.Errorf("不存在的文件")
+			}
+			return nil, err
 		}
-		fmt.Printf("获取本地文件信息失败:%v\n", err)
+
+		return fInfo, nil
+	}()
+	if err != nil {
+		fmt.Printf("获取文件信息失败:%v\n", err)
 		return
 	}
+
+	// Get file name and size
 	fileName := fileInfo.Name()
 	fileSize := fileInfo.Size()
 
+	// Empty file is not allowed
 	if !(fileSize > 0) {
 		fmt.Printf("不允许上传空文件\n")
 		return
 	}
 
+	// Check if the object exists
 	exists, err := bucket.IsObjectExist(fileName)
 	if err != nil {
 		fmt.Printf("查询对象失败:%v\n", err)
 		return
 	}
 	if exists {
-		fmt.Printf("对象名已被占用\n")
+		fmt.Printf("同名对象已存在\n")
 		return
 	}
 
 	fmt.Printf("当前操作:上传文件%v, 文件大小%v\n", fileName, fileSize)
 
+	// Do upload file
 	err = bucket.UploadFile(fileName, filePath, partSize, oss.Progress(newProgressBar(fileSize)), oss.Routines(numThreads), oss.Checkpoint(true, fmt.Sprintf("%v.cp", fileName)))
 	if err != nil {
 		fmt.Printf("上传文件失败:%v\n", err)
@@ -55,12 +71,15 @@ func uploadCmd(args []string) {
 }
 
 func downloadCmd(args []string) {
+	var err error
+
 	if len(args) != 2 {
 		fmt.Printf("download:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 	objectName := args[1]
 
+	// Cheak if the object exists
 	exists, err := bucket.IsObjectExist(objectName)
 	if err != nil {
 		fmt.Printf("查询对象失败:%v\n", err)
@@ -71,6 +90,7 @@ func downloadCmd(args []string) {
 		return
 	}
 
+	// Check the local file exists
 	_, err = os.Stat(objectName)
 	if err == nil {
 		fmt.Printf("同名文件已存在\n")
@@ -82,11 +102,13 @@ func downloadCmd(args []string) {
 		}
 	}
 
+	// Get object meta
 	header, err := bucket.GetObjectMeta(objectName)
 	if err != nil {
 		fmt.Printf("获取对象元信息失败:%v\n", err)
 	}
 
+	// Get object size
 	fileSize, err := strconv.ParseInt(header.Get("Content-Length"), 10, 64)
 	if err != nil {
 		fmt.Printf("获取对象大小失败:%v\n", err)
@@ -95,6 +117,7 @@ func downloadCmd(args []string) {
 
 	fmt.Printf("当前操作:下载文件%v, 文件大小%v\n", objectName, fileSize)
 
+	// Do download file
 	err = bucket.DownloadFile(objectName, objectName, partSize, oss.Progress(newProgressBar(fileSize)), oss.Routines(numThreads), oss.Checkpoint(true, fmt.Sprintf("%v.cp", objectName)))
 	if err != nil {
 		fmt.Printf("下载文件失败:%v\n", err)
@@ -113,6 +136,8 @@ func listCmd(args []string) {
 	fmt.Printf("==========================\n")
 	marker := ""
 	for {
+		var err error
+
 		lsRes, err := bucket.ListObjects(oss.Marker(marker))
 		if err != nil {
 			fmt.Printf("列举文件失败:%v\n", err)
@@ -133,12 +158,15 @@ func listCmd(args []string) {
 }
 
 func removeCmd(args []string) {
+	var err error
+
 	if len(args) != 2 {
 		fmt.Printf("remove:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 	objectName := args[1]
 
+	// Check if the object exists
 	exists, err := bucket.IsObjectExist(objectName)
 	if err != nil {
 		fmt.Printf("查询对象失败:%v\n", err)
@@ -149,6 +177,7 @@ func removeCmd(args []string) {
 		return
 	}
 
+	// Do delete object
 	err = bucket.DeleteObject(objectName)
 	if err != nil {
 		fmt.Printf("删除文件失败:%v\n", err)
@@ -169,7 +198,7 @@ func helpCmd(args []string) {
 	fmt.Printf("%v", message)
 }
 
-// 分发任务
+// Distribute commands
 func handCommand(args []string) {
 	if len(args) > 0 {
 		mainCmd := args[0]
@@ -197,7 +226,7 @@ var bucket *oss.Bucket
 func main() {
 	b, err := getBucket()
 	if err != nil {
-		fmt.Printf("初始化客户端错误:%v\n", err)
+		fmt.Printf("初始化数据桶错误:%v\n", err)
 		return
 	}
 	bucket = b
