@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
 
@@ -11,6 +13,7 @@ var bucketName = "cloud-netdisk"
 
 const partSize = 2 * 1024 * 1024
 const numThreads = 3
+const waitTime = time.Second * 5
 
 // 获取数据桶, 通常只执行一次
 func getBucket() (*oss.Bucket, error) {

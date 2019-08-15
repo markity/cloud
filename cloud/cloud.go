@@ -61,12 +61,15 @@ func uploadCmd(args []string) {
 	fmt.Printf("当前操作:上传文件%v, 文件大小%v\n", fileName, fileSize)
 
 	// Do upload file
-	err = bucket.UploadFile(fileName, filePath, partSize, oss.Progress(newProgressBar(fileSize)), oss.Routines(numThreads), oss.Checkpoint(true, fmt.Sprintf("%v.cp", fileName)))
-	if err != nil {
-		fmt.Printf("上传文件失败:%v\n", err)
-		return
+	for {
+		if err := bucket.UploadFile(fileName, filePath, partSize, oss.Progress(newProgressBar(fileSize)), oss.Routines(numThreads), oss.Checkpoint(true, fmt.Sprintf("%v.cp", fileName))); err != nil {
+			fmt.Printf("\n上传文件失败:%v\n", err)
+			fmt.Printf("%v后断点续传...\n", waitTime)
+			time.Sleep(waitTime)
+			continue
+		}
+		break
 	}
-
 	fmt.Printf("上传成功\n")
 }
 
@@ -118,12 +121,15 @@ func downloadCmd(args []string) {
 	fmt.Printf("当前操作:下载文件%v, 文件大小%v\n", objectName, fileSize)
 
 	// Do download file
-	err = bucket.DownloadFile(objectName, objectName, partSize, oss.Progress(newProgressBar(fileSize)), oss.Routines(numThreads), oss.Checkpoint(true, fmt.Sprintf("%v.cp", objectName)))
-	if err != nil {
-		fmt.Printf("下载文件失败:%v\n", err)
-		return
+	for {
+		if err := bucket.DownloadFile(objectName, objectName, partSize, oss.Progress(newProgressBar(fileSize)), oss.Routines(numThreads), oss.Checkpoint(true, fmt.Sprintf("%v.cp", objectName))); err != nil {
+			fmt.Printf("\n下载文件失败:%v\n", err)
+			fmt.Printf("%v后断点续传...\n", waitTime)
+			time.Sleep(waitTime)
+			continue
+		}
+		break
 	}
-
 	fmt.Printf("下载成功\n")
 }
 
@@ -141,7 +147,7 @@ func listCmd(args []string) {
 		lsRes, err := bucket.ListObjects(oss.Marker(marker))
 		if err != nil {
 			fmt.Printf("列举文件失败:%v\n", err)
-			return
+			break
 		}
 
 		for _, object := range lsRes.Objects {
