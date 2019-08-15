@@ -22,10 +22,5 @@ func getBucket() (*oss.Bucket, error) {
 		return nil, err
 	}
 
-	bucket, err := client.Bucket(bucketName)
-	if err != nil {
-		return nil, err
-	}
-
-	return bucket, nil
+	return client.Bucket(bucketName)
 }

@@ -96,7 +96,7 @@ func downloadCmd(args []string) {
 	// Check the local file exists
 	_, err = os.Stat(objectName)
 	if err == nil {
-		fmt.Printf("同名文件已存在\n")
+		fmt.Printf("当前目录同名文件已存在\n")
 		return
 	} else {
 		if !os.IsNotExist(err) {
