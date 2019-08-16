@@ -51,8 +51,7 @@ func getConfigPath() (string, error) {
 		return "", err
 	}
 
-	configPath := filepath.Join(filepath.Dir(execable), "config.json")
-	return configPath, nil
+	return filepath.Join(filepath.Dir(execable), "config.json"), nil
 }
 
 func prepareConfig() error {
@@ -61,8 +60,13 @@ func prepareConfig() error {
 		return fmt.Errorf("获取配置文件路径失败(%v)", err)
 	}
 
+	// 创建配置文件
 	file, err := os.OpenFile(configPath, os.O_CREATE|os.O_RDONLY, 0666)
+	if err != nil {
+		return fmt.Errorf("创建配置文件失败(%v)", err)
+	}
 
+	// 写入默认配置
 	_, err = file.Write([]byte(baseConfig))
 	if err != nil {
 		return err
@@ -112,5 +116,10 @@ func getBucket() (*oss.Bucket, error) {
 		return nil, err
 	}
 
-	return client.Bucket(bucketName)
+	b, err := client.Bucket(bucketName)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }

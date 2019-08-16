@@ -14,6 +14,7 @@ func initCmd(args []string) {
 		fmt.Printf("init:参数错误, 输入help获取帮助信息\n")
 		return
 	}
+
 	if err := prepareConfig(); err != nil {
 		fmt.Printf("初始化配置文件失败:%v\n", err)
 		return
@@ -65,6 +66,13 @@ func uploadCmd(args []string) {
 		return
 	}
 
+	// 加载配置文件
+	if err := readConfig(); err != nil {
+		fmt.Printf("加载配置文件失败:%v\n", err)
+		return
+	}
+	fmt.Printf("成功加载配置:\n  分片大小:%v\n  线程数:%v\n  等待时长:%v\n", config.GetPartSize(), config.GetNumThreads(), config.GetWaitTime())
+
 	fmt.Printf("当前操作:上传文件%v, 文件大小%v\n", fileName, fileSize)
 
 	// 上传
@@ -81,8 +89,6 @@ func uploadCmd(args []string) {
 }
 
 func downloadCmd(args []string) {
-	var err error
-
 	if len(args) != 2 {
 		fmt.Printf("download:参数错误, 输入help获取帮助信息\n")
 		return
@@ -124,6 +130,13 @@ func downloadCmd(args []string) {
 		fmt.Printf("获取对象大小失败:%v\n", err)
 		return
 	}
+
+	// 加载配置文件
+	if err := readConfig(); err != nil {
+		fmt.Printf("加载配置文件失败:%v\n", err)
+		return
+	}
+	fmt.Printf("成功加载配置:\n  分片大小:%v\n  线程数:%v\n  等待时长:%v\n", config.GetPartSize(), config.GetNumThreads(), config.GetWaitTime())
 
 	fmt.Printf("当前操作:下载文件%v, 文件大小%v\n", objectName, fileSize)
 
@@ -171,8 +184,6 @@ func listCmd(args []string) {
 }
 
 func removeCmd(args []string) {
-	var err error
-
 	if len(args) != 2 {
 		fmt.Printf("remove:参数错误, 输入help获取帮助信息\n")
 		return
@@ -196,7 +207,6 @@ func removeCmd(args []string) {
 		fmt.Printf("删除文件失败:%v\n", err)
 		return
 	}
-
 	fmt.Printf("删除成功\n")
 }
 
@@ -216,19 +226,11 @@ func handCommand(args []string) {
 	if len(args) > 0 {
 		mainCmd := args[0]
 		switch mainCmd {
+		case "init":
+			initCmd(args)
 		case "upload":
-			if err := readConfig(); err != nil {
-				fmt.Printf("加载配置文件失败:%v\n", err)
-				return
-			}
-			fmt.Printf("成功加载配置:\n  分片大小:%v\n  线程数:%v\n  等待时长:%v\n", config.GetPartSize(), config.GetPartSize(), config.GetWaitTime())
 			uploadCmd(args)
 		case "download":
-			if err := readConfig(); err != nil {
-				fmt.Printf("加载配置文件失败:%v\n", err)
-				return
-			}
-			fmt.Printf("成功加载配置:\n  分片大小:%v\n  线程数:%v\n  等待时长:%v\n", config.GetPartSize(), config.GetPartSize(), config.GetWaitTime())
 			downloadCmd(args)
 		case "list":
 			listCmd(args)
