@@ -251,7 +251,7 @@ var bucket *oss.Bucket
 func main() {
 	b, err := getBucket()
 	if err != nil {
-		fmt.Printf("初始化数据桶错误:%v\n", err)
+		fmt.Printf("初始化数据桶失败:%v\n", err)
 		return
 	}
 	bucket = b

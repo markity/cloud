@@ -69,7 +69,7 @@ func prepareConfig() error {
 	// 写入默认配置
 	_, err = file.Write([]byte(baseConfig))
 	if err != nil {
-		return err
+		return fmt.Errorf("写入配置文件失败(%v)", err)
 	}
 
 	return nil
@@ -86,7 +86,7 @@ func readConfig() error {
 	file, err := os.OpenFile(configPath, os.O_RDONLY, 0666)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("不存在配置文件(%v), 输入init初始化配置", configPath)
+			return fmt.Errorf("配置文件(%v)不存在, 输入init初始化配置", configPath)
 		}
 		return err
 	}
@@ -113,12 +113,12 @@ func readConfig() error {
 func getBucket() (*oss.Bucket, error) {
 	client, err := oss.New(endpoint, accessKeyID, accessKeySecret)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("创建客户端失败(%v)", err)
 	}
 
 	b, err := client.Bucket(bucketName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("获取数据桶失败(%v)", err)
 	}
 
 	return b, nil
