@@ -30,18 +30,13 @@ func uploadCmd(args []string) {
 	filePath := args[1]
 
 	// 获取 FileInfo
-	fileInfo, err := func() (os.FileInfo, error) {
-		fInfo, err := os.Stat(filePath)
-		if err != nil {
-			if os.IsNotExist(err) {
-				return nil, fmt.Errorf("不存在的文件")
-			}
-			return nil, err
-		}
-		return fInfo, nil
-	}()
+	fileInfo, err := os.Stat(filePath)
 	if err != nil {
-		fmt.Printf("获取文件信息失败:%v\n", err)
+		if os.IsNotExist(err) {
+			fmt.Printf("获取文件信息失败:不存在的文件\n")
+		} else {
+			fmt.Printf("获取文件信息失败:%v\n", err)
+		}
 		return
 	}
 
@@ -111,11 +106,9 @@ func downloadCmd(args []string) {
 	if err == nil {
 		fmt.Printf("当前目录同名文件已存在\n")
 		return
-	} else {
-		if !os.IsNotExist(err) {
-			fmt.Printf("获取本地文件信息失败:%v\n", err)
-			return
-		}
+	} else if !os.IsNotExist(err) {
+		fmt.Printf("获取本地文件信息失败:%v\n", err)
+		return
 	}
 
 	// 获取对象元信息
