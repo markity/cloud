@@ -83,7 +83,7 @@ func readConfig() error {
 	}
 
 	// 打开配置文件
-	file, err := os.OpenFile(configPath, os.O_RDONLY, 0666)
+	file, err := os.OpenFile(configPath, os.O_RDONLY, 0)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return fmt.Errorf("配置文件(%v)不存在, 输入init初始化配置", configPath)
