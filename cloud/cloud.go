@@ -39,6 +39,10 @@ func uploadCmd(args []string) {
 		}
 		return
 	}
+	if fileInfo.IsDir() {
+		fmt.Printf("不允许上传文件夹\n")
+		return
+	}
 
 	// 获取文件名 文件大小
 	fileName := fileInfo.Name()
@@ -152,7 +156,8 @@ func listCmd(args []string) {
 		return
 	}
 
-	fmt.Printf("==========================\n")
+	// 获取所有对象信息
+	objs := make([]oss.ObjectProperties, 0)
 	marker := ""
 	for {
 		var err error
@@ -163,8 +168,8 @@ func listCmd(args []string) {
 			break
 		}
 
-		for _, object := range lsRes.Objects {
-			fmt.Printf("%v %v %v\n", object.Key, object.LastModified.In(time.Local).Format("2006-01-02T15:04:05"), object.Size)
+		for _, obj := range lsRes.Objects {
+			objs = append(objs, obj)
 		}
 
 		if lsRes.IsTruncated {
@@ -172,6 +177,12 @@ func listCmd(args []string) {
 		} else {
 			break
 		}
+	}
+
+	// 循环遍历
+	fmt.Printf("==========================\n")
+	for _, obj := range objs {
+		fmt.Printf("%v %v %v\n", obj.Key, obj.LastModified.In(time.Local).Format("2006-01-02T15:04:05"), obj.Size)
 	}
 	fmt.Printf("==========================\n")
 }
@@ -214,7 +225,7 @@ func helpCmd(args []string) {
 	fmt.Printf("%v", message)
 }
 
-// Distribute commands
+// 分发命令
 func handCommand(args []string) {
 	if len(args) > 0 {
 		mainCmd := args[0]
