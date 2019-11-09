@@ -13,8 +13,8 @@ import (
 
 // oss基础设置
 var endpoint = "oss-cn-chengdu.aliyuncs.com"
-var accessKeyID = "LTAIsfVsnfB9GgSx"
-var accessKeySecret = "yqSlknBGyIpe3iUr8jdbm2TqJqA8ni"
+var accessKeyID = "LTAI4FjHUMcLGdKUWVQgArJq"
+var accessKeySecret = "WytnjApAetmQ2WKh20KH113r7JIm3U"
 var bucketName = "cloud-netdisk"
 
 // 默认配置
@@ -61,7 +61,7 @@ func prepareConfig() error {
 	}
 
 	// 创建配置文件
-	file, err := os.OpenFile(configPath, os.O_CREATE|os.O_RDONLY, 0666)
+	file, err := os.OpenFile(configPath, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		return fmt.Errorf("创建配置文件失败(%v)", err)
 	}
