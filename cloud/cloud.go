@@ -180,11 +180,13 @@ func listCmd(args []string) {
 	}
 
 	// 循环遍历
-	fmt.Printf("==========================\n")
-	for _, obj := range objs {
-		fmt.Printf("%v %v %v\n", obj.Key, obj.LastModified.In(time.Local).Format("2006-01-02T15:04:05"), obj.Size)
+	if len(objs) > 0 {
+		fmt.Printf("==========================\n")
+		for _, obj := range objs {
+			fmt.Printf("%v %v %v\n", obj.Key, obj.LastModified.In(time.Local).Format("2006-01-02T15:04:05"), obj.Size)
+		}
+		fmt.Printf("==========================\n")
 	}
-	fmt.Printf("==========================\n")
 }
 
 func removeCmd(args []string) {
