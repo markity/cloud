@@ -119,6 +119,7 @@ func downloadCmd(args []string) {
 	header, err := bucket.GetObjectMeta(objectName)
 	if err != nil {
 		fmt.Printf("获取对象元信息失败:%v\n", err)
+		return
 	}
 
 	// 获取对象大小
@@ -216,13 +217,31 @@ func removeCmd(args []string) {
 	fmt.Printf("删除成功\n")
 }
 
+func renameCmd(args []string) {
+	if len(args) != 3 {
+		fmt.Printf("rename:参数错误, 输入help获取帮助信息\n")
+		return
+	}
+
+	if _, err := bucket.CopyObject(args[1], args[2]); err != nil {
+		fmt.Printf("重命名对象失败:%v\n", err)
+		return
+	}
+	if err := bucket.DeleteObject(args[1]); err != nil {
+		fmt.Printf("删除原对象失败:%v\n", err)
+		return
+	}
+
+	fmt.Printf("重命名成功\n")
+}
+
 func helpCmd(args []string) {
 	if len(args) != 1 {
 		fmt.Printf("help:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 
-	message := "====================\ninit: 初始上传下载配置文件\nupload 文件路径: 上传文件\ndownload 文件名: 下载文件\nlist: 显示所有文件\nremove 文件名: 删除文件\nhelp: 查看帮助\n====================\n"
+	message := "====================\ninit: 初始上传下载配置文件\nupload 文件路径: 上传文件\ndownload 文件名: 下载文件\nlist: 显示所有文件\nremove 文件名: 删除文件\nrename 文件名 新命名: 修改文件名\nhelp: 查看帮助\n====================\n"
 
 	fmt.Printf("%v", message)
 }
@@ -242,6 +261,8 @@ func handCommand(args []string) {
 			listCmd(args)
 		case "remove":
 			removeCmd(args)
+		case "rename":
+			renameCmd(args)
 		case "help":
 			helpCmd(args)
 		default:
