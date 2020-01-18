@@ -1,8 +1,11 @@
 package main
 
 import (
+	"archive/tar"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -235,13 +238,105 @@ func renameCmd(args []string) {
 	fmt.Printf("重命名成功\n")
 }
 
+func comCmd(args []string) {
+	if !(len(args) == 2 || len(args) == 3) {
+		fmt.Printf("com:参数错误, 输入help获取帮助信息\n")
+		return
+	}
+
+	// 检查文件类型
+	srcInfo, err := os.Stat(args[1])
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Printf("不存在的文件夹")
+		} else {
+			fmt.Printf("获取原始文件夹信息失败:%v\n", err)
+		}
+		return
+	}
+	if !srcInfo.IsDir() {
+		fmt.Printf("只能压缩文件夹\n")
+		return
+	}
+
+	// 目标压缩文件的文件名
+	destName := srcInfo.Name() + ".tar"
+	if len(args) == 3 {
+		destName = args[2]
+	}
+
+	// 检查是否存在同名文件
+	_, err = os.Stat(destName)
+	if err == nil {
+		fmt.Printf("同名文件<%v>已存在, 请删除后重试\n", destName)
+		return
+	} else {
+		if !os.IsNotExist(err) {
+			fmt.Printf("获取文件信息错误:%v\n", err)
+			return
+		}
+	}
+
+	dest, err := os.OpenFile(destName, os.O_CREATE|os.O_WRONLY, 0777)
+	defer func() {
+		if err := dest.Close(); err != nil {
+			fmt.Printf("关闭目标文件失败:%v\n", err)
+		}
+	}()
+
+	tw := tar.NewWriter(dest)
+	defer func() {
+		if err := tw.Close(); err != nil {
+			fmt.Printf("关闭压缩文件写入器失败:%v\n", err)
+		}
+	}()
+
+	err = filepath.Walk(args[1], func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+
+		hdr, err := tar.FileInfoHeader(info, "")
+		if err != nil {
+			return err
+		}
+
+		hdr.Name = path
+
+		if err := tw.WriteHeader(hdr); err != nil {
+			return err
+		}
+
+		f, err := os.OpenFile(path, os.O_RDONLY, 0)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				fmt.Printf("关闭文件失败:%v\n", err)
+			}
+		}()
+
+		_, err = io.Copy(tw, f)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		fmt.Printf("遍历文件夹失败:%v\n", err)
+		return
+	}
+}
+
 func helpCmd(args []string) {
 	if len(args) != 1 {
 		fmt.Printf("help:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 
-	message := "====================\ninit: 初始上传下载配置文件\nupload 文件路径: 上传文件\ndownload 文件名: 下载文件\nlist: 显示所有文件\nremove 文件名: 删除文件\nrename 文件名 新命名: 修改文件名\nhelp: 查看帮助\n====================\n"
+	message := "====================\ninit: 初始上传下载配置文件\nupload 文件路径: 上传文件\ndownload 文件名: 下载文件\nlist: 显示所有文件\nremove 文件名: 删除文件\nrename 文件名 新命名: 修改文件名\ncom 文件夹名 [目标文件名]: 打包一个文件夹为tar格式\nhelp: 查看帮助\n====================\n"
 
 	fmt.Printf("%v", message)
 }
@@ -263,6 +358,8 @@ func handCommand(args []string) {
 			removeCmd(args)
 		case "rename":
 			renameCmd(args)
+		case "com":
+			comCmd(args)
 		case "help":
 			helpCmd(args)
 		default:
