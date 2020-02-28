@@ -32,14 +32,24 @@ func uploadCmd(args []string) {
 	}
 	filePath := args[1]
 
-	// 获取 FileInfo
-	fileInfo, err := os.Stat(filePath)
+	// 打开文件, 这里不使用os.Stat, 保证文件不被中途篡改
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0)
 	if err != nil {
 		if os.IsNotExist(err) {
 			fmt.Printf("获取文件信息失败:不存在的文件\n")
+		} else if os.IsPermission(err) {
+			fmt.Printf("获取文件信息失败:权限不足\n")
 		} else {
 			fmt.Printf("获取文件信息失败:%v\n", err)
 		}
+		return
+	}
+	defer file.Close()
+
+	fileInfo, err := os.Stat(filePath)
+	file.Stat()
+	if err != nil {
+		fmt.Printf("获取文件信息失败:%v\n", err)
 		return
 	}
 	if fileInfo.IsDir() {
@@ -74,7 +84,6 @@ func uploadCmd(args []string) {
 		return
 	}
 	fmt.Printf("成功加载配置:\n  分片大小:%v\n  线程数:%v\n  等待时长:%v\n", config.GetPartSize(), config.GetNumThreads(), config.GetWaitTime())
-
 	fmt.Printf("当前操作:上传文件%v, 文件大小%v\n", fileName, fileSize)
 
 	// 上传
@@ -108,19 +117,13 @@ func downloadCmd(args []string) {
 		return
 	}
 
-	// 检查当前目录是否存在同名文件
-	_, err = os.Stat(objectName)
-	if err == nil {
-		fmt.Printf("当前目录同名文件已存在\n")
-		return
-	} else if !os.IsNotExist(err) {
-		fmt.Printf("获取本地文件信息失败:%v\n", err)
-		return
-	}
-
 	// 获取对象元信息
 	header, err := bucket.GetObjectMeta(objectName)
 	if err != nil {
+		if serviceErr, ok := err.(oss.ServiceError); ok && serviceErr.StatusCode == 404 {
+			fmt.Printf("对象不存在\n")
+			return
+		}
 		fmt.Printf("获取对象元信息失败:%v\n", err)
 		return
 	}
@@ -164,8 +167,6 @@ func listCmd(args []string) {
 	objs := make([]oss.ObjectProperties, 0)
 	marker := ""
 	for {
-		var err error
-
 		lsRes, err := bucket.ListObjects(oss.Marker(marker))
 		if err != nil {
 			fmt.Printf("列举文件失败:%v\n", err)
@@ -190,6 +191,8 @@ func listCmd(args []string) {
 			fmt.Printf("%v %v %v\n", obj.Key, obj.LastModified.In(time.Local).Format("2006-01-02T15:04:05"), obj.Size)
 		}
 		fmt.Printf("==========================\n")
+	} else {
+		fmt.Printf("无任何对象\n")
 	}
 }
 
@@ -226,8 +229,13 @@ func renameCmd(args []string) {
 		return
 	}
 
+	if args[1] == args[2] {
+		fmt.Println("重命名对象失败:新对象名不允许与原对象名相同")
+		return
+	}
+
 	if _, err := bucket.CopyObject(args[1], args[2]); err != nil {
-		fmt.Printf("重命名对象失败:%v\n", err)
+		fmt.Printf("创建新对象失败:%v\n", err)
 		return
 	}
 	if err := bucket.DeleteObject(args[1]); err != nil {
@@ -248,14 +256,16 @@ func comCmd(args []string) {
 	srcInfo, err := os.Stat(args[1])
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Printf("不存在的文件夹")
+			fmt.Printf("获取文件夹信息失败:不存在的文件夹\n")
+		} else if os.IsPermission(err) {
+			fmt.Printf("获取文件夹信息失败:权限不足\n")
 		} else {
-			fmt.Printf("获取原始文件夹信息失败:%v\n", err)
+			fmt.Printf("获取文件夹信息失败:%v\n", err)
 		}
 		return
 	}
 	if !srcInfo.IsDir() {
-		fmt.Printf("只能压缩文件夹\n")
+		fmt.Printf("仅可压缩文件夹\n")
 		return
 	}
 
@@ -265,33 +275,29 @@ func comCmd(args []string) {
 		destName = args[2]
 	}
 
-	// 检查是否存在同名文件
-	_, err = os.Stat(destName)
-	if err == nil {
-		fmt.Printf("同名文件<%v>已存在, 请删除后重试\n", destName)
-		return
-	} else {
-		if !os.IsNotExist(err) {
-			fmt.Printf("获取文件信息错误:%v\n", err)
-			return
+	destFile, err := os.OpenFile(destName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	if err != nil {
+		if os.IsPermission(err) {
+			fmt.Printf("创建文件失败:权限不足\n")
+		} else {
+			fmt.Printf("创建文件失败:%v\n", err)
 		}
+		return
 	}
-
-	dest, err := os.OpenFile(destName, os.O_CREATE|os.O_WRONLY, 0777)
 	defer func() {
-		if err := dest.Close(); err != nil {
-			fmt.Printf("关闭目标文件失败:%v\n", err)
+		if err := destFile.Close(); err != nil {
+			fmt.Printf("关闭目标压缩文件失败:%v\n", err)
 		}
 	}()
 
-	tw := tar.NewWriter(dest)
+	tw := tar.NewWriter(destFile)
 	defer func() {
 		if err := tw.Close(); err != nil {
-			fmt.Printf("关闭压缩文件写入器失败:%v\n", err)
+			fmt.Printf("关闭压缩写入器失败:%v\n", err)
 		}
 	}()
 
-	err = filepath.Walk(args[1], func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(args[1], func(path string, info os.FileInfo, err error) (e error) {
 		if info.IsDir() {
 			return nil
 		}
@@ -311,9 +317,11 @@ func comCmd(args []string) {
 		if err != nil {
 			return err
 		}
+		// 最终关闭文件错误, 也视为失败
 		defer func() {
-			if err := f.Close(); err != nil {
-				fmt.Printf("关闭文件失败:%v\n", err)
+			err := f.Close()
+			if e == nil {
+				e = err
 			}
 		}()
 

@@ -12,13 +12,14 @@ import (
 )
 
 // oss基础设置
-var endpoint = "oss-cn-chengdu.aliyuncs.com"
-var accessKeyID = "LTAI4FjHUMcLGdKUWVQgArJq"
-var accessKeySecret = "WytnjApAetmQ2WKh20KH113r7JIm3U"
-var bucketName = "cloud-netdisk"
+const endpoint = "oss-cn-chengdu.aliyuncs.com"
+const accessKeyID = "LTAI4FjHUMcLGdKUWVQgArJq"
+const accessKeySecret = "WytnjApAetmQ2WKh20KH113r7JIm3U"
+const bucketName = "cloud-netdisk"
 
-// 默认配置
-var baseConfig = `{
+// 配置文件设置
+const configName = "config.json"
+const baseConfig = `{
     "part_size_bytes": 2097152,
     "num_threads": 3,
     "wait_time_seconds": 5
@@ -51,20 +52,26 @@ func getConfigPath() (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(filepath.Dir(execable), "config.json"), nil
+	return filepath.Join(filepath.Dir(execable), configName), nil
 }
 
-func prepareConfig() error {
+func prepareConfig() (e error) {
 	configPath, err := getConfigPath()
 	if err != nil {
 		return fmt.Errorf("获取配置文件路径失败(%v)", err)
 	}
 
 	// 创建配置文件
-	file, err := os.OpenFile(configPath, os.O_CREATE|os.O_WRONLY, 0666)
+	file, err := os.OpenFile(configPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("创建配置文件失败(%v)", err)
 	}
+	defer func() {
+		err := file.Close()
+		if e == nil {
+			e = err
+		}
+	}()
 
 	// 写入默认配置
 	_, err = file.Write([]byte(baseConfig))
@@ -76,7 +83,7 @@ func prepareConfig() error {
 }
 
 // 读取可执行文件目录下的config.json配置
-func readConfig() error {
+func readConfig() (e error) {
 	configPath, err := getConfigPath()
 	if err != nil {
 		return fmt.Errorf("获取配置文件路径失败(%v)", err)
@@ -90,6 +97,12 @@ func readConfig() error {
 		}
 		return err
 	}
+	defer func() {
+		err := file.Close()
+		if e == nil {
+			e = err
+		}
+	}()
 
 	// 读取配置文件
 	configBytes, err := ioutil.ReadAll(file)
