@@ -12,10 +12,10 @@ import (
 )
 
 // oss基础设置
-const endpoint = "oss-cn-chengdu.aliyuncs.com"
-const accessKeyID = "LTAI4FjHUMcLGdKUWVQgArJq"
-const accessKeySecret = "WytnjApAetmQ2WKh20KH113r7JIm3U"
-const bucketName = "cloud-netdisk"
+const endpoint = "your-endpoint" // 例如 oss-cn-chengdu.aliyuncs.com
+const accessKeyID = "your-accessKeyID"
+const accessKeySecret = "your-accessKeySecret"
+const bucketName = "your-bucketName"
 
 // 配置文件设置
 const configName = "config.json"
