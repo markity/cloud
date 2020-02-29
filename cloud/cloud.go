@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -44,10 +45,13 @@ func uploadCmd(args []string) {
 		}
 		return
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("关闭文件失败:%v\n", err)
+		}
+	}()
 
-	fileInfo, err := os.Stat(filePath)
-	file.Stat()
+	fileInfo, err := file.Stat()
 	if err != nil {
 		fmt.Printf("获取文件信息失败:%v\n", err)
 		return
@@ -118,7 +122,7 @@ func downloadCmd(args []string) {
 	}
 
 	// 获取对象元信息
-	header, err := bucket.GetObjectMeta(objectName)
+	hdr, err := bucket.GetObjectMeta(objectName)
 	if err != nil {
 		if serviceErr, ok := err.(oss.ServiceError); ok && serviceErr.StatusCode == 404 {
 			fmt.Printf("对象不存在\n")
@@ -129,7 +133,7 @@ func downloadCmd(args []string) {
 	}
 
 	// 获取对象大小
-	fileSize, err := strconv.ParseInt(header.Get("Content-Length"), 10, 64)
+	fileSize, err := strconv.ParseInt(hdr.Get("Content-Length"), 10, 64)
 	if err != nil {
 		fmt.Printf("获取对象大小失败:%v\n", err)
 		return
@@ -169,7 +173,7 @@ func listCmd(args []string) {
 	for {
 		lsRes, err := bucket.ListObjects(oss.Marker(marker))
 		if err != nil {
-			fmt.Printf("列举文件失败:%v\n", err)
+			fmt.Printf("列举对象失败:%v\n", err)
 			break
 		}
 
@@ -184,11 +188,27 @@ func listCmd(args []string) {
 		}
 	}
 
+	objAcls := make([]string, 0, len(objs))
+	for _, obj := range objs {
+		acl, err := bucket.GetObjectACL(obj.Key)
+		if err != nil {
+			fmt.Printf("获取对象ACL失败:%v\n", err)
+			return
+		}
+		objAcls = append(objAcls, acl.ACL)
+	}
+
 	// 循环遍历
 	if len(objs) > 0 {
 		fmt.Printf("==========================\n")
-		for _, obj := range objs {
-			fmt.Printf("%v %v %v\n", obj.Key, obj.LastModified.In(time.Local).Format("2006-01-02T15:04:05"), obj.Size)
+		for i := 0; i < len(objs); i++ {
+			obj := objs[i]
+			objAcl := objAcls[i]
+			if objAcl == string(oss.ACLPublicRead) || objAcl == string(oss.ACLPublicReadWrite) {
+				fmt.Printf("%v %v %v %v\n", obj.Key, obj.LastModified.In(time.Local).Format("2006-01-02T15:04:05"), obj.Size, fmt.Sprintf("https://%v.%v/%v", bucketName, endpoint, url.PathEscape(obj.Key)))
+			} else {
+				fmt.Printf("%v %v %v\n", obj.Key, obj.LastModified.In(time.Local).Format("2006-01-02T15:04:05"), obj.Size)
+			}
 		}
 		fmt.Printf("==========================\n")
 	} else {
@@ -338,13 +358,43 @@ func comCmd(args []string) {
 	}
 }
 
+func shareCmd(args []string) {
+	if len(args) != 2 {
+		fmt.Printf("share:参数错误, 输入help获取帮助信息\n")
+		return
+	}
+
+	err := bucket.SetObjectACL(args[1], oss.ACLPublicRead)
+	if err != nil {
+		fmt.Printf("分享文件失败:%v\n", err)
+		return
+	}
+
+	fmt.Printf("分享文件成功, 文件地址:%v\n", fmt.Sprintf("https://%v.%v/%v", bucketName, endpoint, url.PathEscape(args[1])))
+}
+
+func unshareCmd(args []string) {
+	if len(args) != 2 {
+		fmt.Printf("share:参数错误, 输入help获取帮助信息\n")
+		return
+	}
+
+	err := bucket.SetObjectACL(args[1], oss.ACLPrivate)
+	if err != nil {
+		fmt.Printf("取消分享失败:%v\n", err)
+		return
+	}
+
+	fmt.Printf("取消分享成功\n")
+}
+
 func helpCmd(args []string) {
 	if len(args) != 1 {
 		fmt.Printf("help:参数错误, 输入help获取帮助信息\n")
 		return
 	}
 
-	message := "====================\ninit: 初始上传下载配置文件\nupload 文件路径: 上传文件\ndownload 文件名: 下载文件\nlist: 显示所有文件\nremove 文件名: 删除文件\nrename 文件名 新命名: 修改文件名\ncom 文件夹名 [目标文件名]: 打包一个文件夹为tar格式\nhelp: 查看帮助\n====================\n"
+	message := "====================\ninit: 初始上传下载配置文件\nupload 文件路径: 上传文件\ndownload 文件名: 下载文件\nlist: 显示所有文件\nremove 文件名: 删除文件\nrename 文件名 新命名: 修改文件名\ncom 文件夹名 [目标文件名]: 将一个文件夹打包为tar格式\nshare 文件名: 分享文件\nunshare 文件名: 取消分享\nhelp: 查看帮助\n====================\n"
 
 	fmt.Printf("%v", message)
 }
@@ -368,6 +418,10 @@ func handCommand(args []string) {
 			renameCmd(args)
 		case "com":
 			comCmd(args)
+		case "share":
+			shareCmd(args)
+		case "unshare":
+			unshareCmd(args)
 		case "help":
 			helpCmd(args)
 		default:
