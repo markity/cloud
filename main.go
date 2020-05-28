@@ -1,6 +1,8 @@
 package main
 
-import "cloud/cmd"
+import (
+	"cloud/cmd"
+)
 
 func main() {
 	cmd.Execute()
