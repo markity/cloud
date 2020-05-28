@@ -16,6 +16,12 @@ var downloadCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		objectName := args[0]
 
+		_, err := os.Stat(objectName)
+		if !os.IsNotExist(err) {
+			fmt.Printf("failed to download: perhaps file with same name exists in this floder\n")
+			os.Exit(1)
+		}
+
 		exists, err := bucket.IsObjectExist(objectName)
 		if err != nil {
 			fmt.Printf("failed to query: %v\n", err)
@@ -54,6 +60,6 @@ var downloadCmd = &cobra.Command{
 			}
 			break
 		}
-		fmt.Printf("succeec to download\n")
+		fmt.Printf("succeed to download\n")
 	},
 }

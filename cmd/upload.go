@@ -33,6 +33,16 @@ var uploadCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		exists, err := bucket.IsObjectExist(fileName)
+		if err != nil {
+			fmt.Printf("failed to check existence of object: %v\n", err)
+			os.Exit(1)
+		}
+		if exists {
+			fmt.Printf("objcet with same name exists")
+			os.Exit(1)
+		}
+
 		fmt.Printf("config loaded:\n  part_size_bytes:%v\n  num_threads:%v\n  wait_time_secondes:%v\n",
 			cfg.GetPartSize(), cfg.GetNumThreads(), cfg.GetWaitTime())
 		fmt.Printf("uploading %v, file size is %v bytes\n", fileName, fileSize)

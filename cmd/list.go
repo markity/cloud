@@ -45,7 +45,6 @@ var listCmd = &cobra.Command{
 		}
 
 		if len(objs) > 0 {
-			fmt.Printf("==========================\n")
 			for i := 0; i < len(objs); i++ {
 				obj := objs[i]
 				objAcl := objAcls[i]
@@ -58,9 +57,9 @@ var listCmd = &cobra.Command{
 						obj.Key, obj.LastModified.In(time.Local).Format("2006-01-02T15:04:05"), obj.Size)
 				}
 			}
-			fmt.Printf("==========================\n")
+			fmt.Printf("%v objects in total\n", len(objs))
 		} else {
-			fmt.Printf("No objects\n")
+			fmt.Printf("no objects\n")
 		}
 	},
 }
