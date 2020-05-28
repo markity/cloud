@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cloud/util"
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/spf13/cobra"
@@ -49,7 +50,7 @@ var uploadCmd = &cobra.Command{
 
 		for {
 			if err := bucket.UploadFile(fileName, filePath, cfg.GetPartSize(),
-				oss.Progress(newProgressBar(fileSize)), oss.Routines(cfg.GetNumThreads()),
+				oss.Progress(util.NewProgressBar(fileSize)), oss.Routines(cfg.GetNumThreads()),
 				oss.Checkpoint(true, fmt.Sprintf("%v.cp", fileName))); err != nil {
 				fmt.Printf("\nfailed to upload: %v\n", err)
 				fmt.Printf("retrying %v latter...\n", cfg.GetWaitTime())

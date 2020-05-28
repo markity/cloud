@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"bytes"
+	"cloud/util"
 	"encoding/json"
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 // oss settings
@@ -19,72 +18,7 @@ const accessKeySecret = "Your-AccessKeySecret"
 const bucketName = "cloud-netdisk"
 
 var bucket *oss.Bucket
-
-// config settings
-type config struct {
-	PartSize        int64 `json:"part_size_bytes"`
-	NumThreads      int   `json:"num_threads"`
-	WaitTimeSeconds int   `json:"wait_time_seconds"`
-}
-
-var cfg *config
-var cfgName = "cloud-cfg.json"
-var cfgBase = []byte(`{
-    "part_size_bytes": 2097152,
-    "num_threads": 3,
-    "wait_time_seconds": 5
-}`)
-
-func (c *config) GetPartSize() int64 {
-	return c.PartSize
-}
-func (c *config) GetNumThreads() int {
-	return c.NumThreads
-}
-func (c *config) GetWaitTime() time.Duration {
-	return time.Duration(c.WaitTimeSeconds) * time.Second
-}
-
-// progress bar
-func newProgressBar(total int64) *progressBar {
-	return &progressBar{total: total, current: 0, percent: 0}
-}
-
-type progressBar struct {
-	total   int64
-	current int64
-	percent int
-}
-
-func (pb *progressBar) ProgressChanged(event *oss.ProgressEvent) {
-	switch event.EventType {
-	case oss.TransferDataEvent:
-		if pb.total == event.TotalBytes {
-			pb.current = event.ConsumedBytes
-			percent := int(float64(pb.current) * 100 / float64(pb.total))
-			if percent != pb.percent {
-				pb.percent = percent
-				pb.draw()
-				if percent == 100 {
-					fmt.Println()
-				}
-			}
-		}
-	default:
-	}
-}
-func (pb *progressBar) draw() {
-	num := pb.percent / 5
-	fmt.Printf("\r[%v%v] %v / %v %v%%", multiString("=", num), multiString(" ", 20-num), pb.current, pb.total, pb.percent)
-}
-func multiString(s string, num int) string {
-	var buffer bytes.Buffer
-	for i := 0; i < num; i++ {
-		buffer.WriteString(s)
-	}
-
-	return buffer.String()
-}
+var cfg *util.Config
 
 var rootCmd = &cobra.Command{
 	Use:   "cloud",
@@ -118,7 +52,7 @@ func initConfig() {
 		fmt.Printf("failed to get executable file path: %v", err)
 		os.Exit(1)
 	}
-	cfgPath := filepath.Join(filepath.Dir(executable), cfgName)
+	cfgPath := filepath.Join(filepath.Dir(executable), util.CfgName)
 	_, err = os.Stat(cfgPath)
 	if err != nil {
 		// unknown error
@@ -132,7 +66,7 @@ func initConfig() {
 			fmt.Printf("failed to init profile: %v\n", err)
 			os.Exit(1)
 		}
-		_, err = f.Write(cfgBase)
+		_, err = f.Write(util.CfgBase)
 		if err != nil {
 			fmt.Printf("failed to init profile: %v\n", err)
 			os.Exit(1)
@@ -148,7 +82,7 @@ func initConfig() {
 		fmt.Printf("failed to load profile: %v\n", err)
 		os.Exit(1)
 	}
-	cfg = &config{}
+	cfg = &util.Config{}
 	err = json.Unmarshal(cfgBytes, cfg)
 	if err != nil {
 		fmt.Printf("failed to load profile: %v\n", err)
