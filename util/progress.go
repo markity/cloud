@@ -1,23 +1,23 @@
-package main
+package util
 
 import (
 	"bytes"
 	"fmt"
-
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
 
-func newProgressBar(total int64) *progressBar {
-	return &progressBar{total: total, current: 0, percent: 0}
+// progress bar
+func NewProgressBar(total int64) *ProgressBar {
+	return &ProgressBar{total: total, current: 0, percent: 0}
 }
 
-type progressBar struct {
+type ProgressBar struct {
 	total   int64
 	current int64
 	percent int
 }
 
-func (pb *progressBar) ProgressChanged(event *oss.ProgressEvent) {
+func (pb *ProgressBar) ProgressChanged(event *oss.ProgressEvent) {
 	switch event.EventType {
 	case oss.TransferDataEvent:
 		if pb.total == event.TotalBytes {
@@ -34,13 +34,11 @@ func (pb *progressBar) ProgressChanged(event *oss.ProgressEvent) {
 	default:
 	}
 }
-
-func (pb *progressBar) draw() {
+func (pb *ProgressBar) draw() {
 	num := pb.percent / 5
-	fmt.Printf("\r[%v%v] %v / %v %v%%", mulitString("=", num), mulitString(" ", 20-num), pb.current, pb.total, pb.percent)
+	fmt.Printf("\r[%v%v] %v / %v %v%%", multiString("=", num), multiString(" ", 20-num), pb.current, pb.total, pb.percent)
 }
-
-func mulitString(s string, num int) string {
+func multiString(s string, num int) string {
 	var buffer bytes.Buffer
 	for i := 0; i < num; i++ {
 		buffer.WriteString(s)
