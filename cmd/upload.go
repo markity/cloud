@@ -10,7 +10,7 @@ import (
 
 var uploadCmd = &cobra.Command{
 	Use:   "upload",
-	Short: "upload specific file",
+	Short: "Upload specific file",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := args[0]

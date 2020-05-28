@@ -9,7 +9,7 @@ import (
 
 var shareCmd = &cobra.Command{
 	Use:   "share",
-	Short: "share specific object",
+	Short: "Share specific object",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := bucket.SetObjectACL(args[0], oss.ACLPublicRead)
