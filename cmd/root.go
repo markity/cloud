@@ -14,8 +14,8 @@ import (
 
 // oss settings
 const endpoint = "oss-cn-chengdu.aliyuncs.com" // like oss-cn-chengdu.aliyuncs.com
-const accessKeyID = "LTAI4GHri1t1mHtWHK5RRyf9"
-const accessKeySecret = "e0PNEk94aVKMlHRrDfzb2rUEZIy69O"
+const accessKeyID = "Your-AccessKeyID"
+const accessKeySecret = "Your-AccessKeySecret"
 const bucketName = "cloud-netdisk"
 
 var bucket *oss.Bucket
