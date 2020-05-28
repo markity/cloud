@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cloud/util"
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/spf13/cobra"
@@ -51,7 +52,7 @@ var downloadCmd = &cobra.Command{
 
 		for {
 			if err := bucket.DownloadFile(objectName, objectName, cfg.GetPartSize(),
-				oss.Progress(newProgressBar(fileSize)), oss.Routines(cfg.GetNumThreads()),
+				oss.Progress(util.NewProgressBar(fileSize)), oss.Routines(cfg.GetNumThreads()),
 				oss.Checkpoint(true, fmt.Sprintf("%v.cp", objectName))); err != nil {
 				fmt.Printf("\nfailed to download: %v\n", err)
 				fmt.Printf("retring %v later...\n", cfg.GetWaitTime())
