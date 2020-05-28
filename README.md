@@ -28,7 +28,7 @@ Mode                LastWriteTime         Length Name
 **查看帮助**
 
 ```powershell
-> cloud.exe help
+> cloud.exe
 Cloud provides easy interface to manage files. It Contains uploading,
 downloading, removing, renaming, listing and sharing operations.
 Based on aliyun-oss, you can set up your own net-disk rapidly.
