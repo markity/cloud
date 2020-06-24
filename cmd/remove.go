@@ -15,11 +15,11 @@ var removeCmd = &cobra.Command{
 
 		exists, err := bucket.IsObjectExist(objectName)
 		if err != nil {
-			fmt.Printf("failed to query: %v\n", err)
+			fmt.Printf("failed to query object: %v\n", err)
 			os.Exit(1)
 		}
 		if !exists {
-			fmt.Printf("the object does'e exist\n")
+			fmt.Printf("object not exists\n")
 			os.Exit(1)
 		}
 

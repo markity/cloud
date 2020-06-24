@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+var shared bool
+
+func init() {
+	uploadCmd.Flags().BoolVarP(&shared, "shared", "s", false, "true if share this object")
+}
+
 var uploadCmd = &cobra.Command{
 	Use:   "upload",
 	Short: "Upload specific file",
@@ -22,7 +28,7 @@ var uploadCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if fileInfo.IsDir() {
-			fmt.Printf("floder is not allowed to upload\n")
+			fmt.Printf("folder is not allowed to upload\n")
 			os.Exit(1)
 		}
 
@@ -46,6 +52,11 @@ var uploadCmd = &cobra.Command{
 
 		fmt.Printf("config loaded:\n  part_size_bytes:%v\n  num_threads:%v\n  wait_time_secondes:%v\n",
 			cfg.GetPartSize(), cfg.GetNumThreads(), cfg.GetWaitTime())
+		if shared {
+			fmt.Printf("  acl: PublicRead\n")
+		} else {
+			fmt.Printf("  acl: Private")
+		}
 		fmt.Printf("uploading %v, file size is %v bytes\n", fileName, fileSize)
 
 		for {
@@ -60,5 +71,11 @@ var uploadCmd = &cobra.Command{
 			break
 		}
 		fmt.Printf("succeed to upload\n")
+
+		if err := bucket.SetObjectACL(fileName, oss.ACLPublicRead); err != nil {
+			fmt.Printf("falied to share object: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("succeed to share object")
 	},
 }

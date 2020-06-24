@@ -12,10 +12,10 @@ import (
 )
 
 // oss settings
-const endpoint = "oss-cn-chengdu.aliyuncs.com" // like oss-cn-chengdu.aliyuncs.com
+const endpoint = "Your-Endpoint" // like oss-cn-chengdu.aliyuncs.com
 const accessKeyID = "Your-AccessKeyID"
 const accessKeySecret = "Your-AccessKeySecret"
-const bucketName = "cloud-netdisk"
+const bucketName = "Your-BuckName"
 
 var bucket *oss.Bucket
 var cfg *util.Config
@@ -49,7 +49,7 @@ func init() {
 func initConfig() {
 	executable, err := os.Executable()
 	if err != nil {
-		fmt.Printf("failed to get executable file path: %v", err)
+		fmt.Printf("failed to get executable file path: %v\n", err)
 		os.Exit(1)
 	}
 	cfgPath := filepath.Join(filepath.Dir(executable), util.CfgName)
@@ -57,39 +57,39 @@ func initConfig() {
 	if err != nil {
 		// unknown error
 		if !os.IsNotExist(err) {
-			fmt.Printf("failed to init profile: %v\n", err)
+			fmt.Printf("failed to stat profile: %v\n", err)
 			os.Exit(1)
 		}
-		// err not exists, write file
+		// err is "existed", write file
 		f, err := os.Create(cfgPath)
 		if err != nil {
-			fmt.Printf("failed to init profile: %v\n", err)
+			fmt.Printf("failed to create profile: %v\n", err)
 			os.Exit(1)
 		}
 		_, err = f.Write(util.CfgBase)
 		if err != nil {
-			fmt.Printf("failed to init profile: %v\n", err)
+			fmt.Printf("failed to write profile: %v\n", err)
 			os.Exit(1)
 		}
 		err = f.Close()
 		if err != nil {
-			fmt.Printf("failed to init profile: %v\n", err)
+			fmt.Printf("failed to close profile: %v\n", err)
 			os.Exit(1)
 		}
 	}
 	cfgBytes, err := ioutil.ReadFile(cfgPath)
 	if err != nil {
-		fmt.Printf("failed to load profile: %v\n", err)
+		fmt.Printf("failed to read profile: %v\n", err)
 		os.Exit(1)
 	}
 	cfg = &util.Config{}
 	err = json.Unmarshal(cfgBytes, cfg)
 	if err != nil {
-		fmt.Printf("failed to load profile: %v\n", err)
+		fmt.Printf("failed to unmarshal profile: %v\n", err)
 		os.Exit(1)
 	}
 	if cfg.NumThreads < 1 || cfg.PartSize < 1 || cfg.WaitTimeSeconds < 0 {
-		fmt.Printf("invalid config, please check the %v\n", cfgPath)
+		fmt.Printf("invalid config, please check config file\n")
 		os.Exit(1)
 	}
 	client, err := oss.New(endpoint, accessKeyID, accessKeySecret)
