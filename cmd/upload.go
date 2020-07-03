@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/spf13/cobra"
+	"net/url"
 	"os"
 	"time"
 )
@@ -72,10 +73,13 @@ var uploadCmd = &cobra.Command{
 		}
 		fmt.Printf("succeed to upload\n")
 
-		if err := bucket.SetObjectACL(fileName, oss.ACLPublicRead); err != nil {
-			fmt.Printf("falied to share object: %v\n", err)
-			os.Exit(1)
+		if shared {
+			if err := bucket.SetObjectACL(fileName, oss.ACLPublicRead); err != nil {
+				fmt.Printf("falied to share object: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("succeed to share, path: %v\n",
+				fmt.Sprintf("https://%v.%v/%v", bucketName, endpoint, url.PathEscape(fileName)))
 		}
-		fmt.Printf("succeed to share object")
 	},
 }
