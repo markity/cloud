@@ -55,6 +55,8 @@ Use "cloud [command] --help" for more information about a command.
 
 **默认配置文件**
 
+在`上传`或`下载`时，会自动加载可执行文件所在目录下的`cloud-cfg.json`。如果不存在则自动创建默认配置文件，参数如下:
+
 ```json
 {
     "part_size_bytes": 2097152,
@@ -74,7 +76,7 @@ Use "cloud [command] --help" for more information about a command.
 ```powershell
 > cloud.exe upload .\myfile.txt
 config loaded:
-  part_size_bytes:72
+  part_size_bytes:2097152
   num_threads:3
   wait_time_secondes:5s
 uploading main.go, file size is 72 bytes
@@ -87,12 +89,12 @@ succeed to upload
 ```powershell
 > cloud.exe download myfile.txt
 config loaded:
-  part_size_bytes:72
+  part_size_bytes:2097152
   num_threads:3
   wait_time_secondes:5s
 downloading myfile.txt, file size is 72 bytes
 [====================] 72 / 72 100%
-succeec to download
+succeed to download
 ```
 
 **查看所有文件**
@@ -121,6 +123,19 @@ succeed to rename
 
 ```powershell
 > cloud.exe share myfile.txt
+succeed to share, path: https://your-bucketName.your-endPoint.aliyuncs.com/myfile.txt
+```
+
+```powershell
+> cloud.exe upload myfile.txt --shared
+config loaded:
+  part_size_bytes:2097152
+  num_threads:3
+  wait_time_secondes:5s
+  acl: PublicRead
+uploading myfile.txt, file size is 72 bytes
+[====================] 72 / 72 100%
+succeed to upload
 succeed to share, path: https://your-bucketName.your-endPoint.aliyuncs.com/myfile.txt
 ```
 

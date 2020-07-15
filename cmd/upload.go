@@ -56,7 +56,7 @@ var uploadCmd = &cobra.Command{
 		if shared {
 			fmt.Printf("  acl: PublicRead\n")
 		} else {
-			fmt.Printf("  acl: Private")
+			fmt.Printf("  acl: Private\n")
 		}
 		fmt.Printf("uploading %v, file size is %v bytes\n", fileName, fileSize)
 
